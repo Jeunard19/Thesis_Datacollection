@@ -16,6 +16,7 @@ def main():
     Y =[]
     Z = []
     succes = []
+    rel_succes = []
     roles = []
     game = []
     target = []
@@ -37,6 +38,7 @@ def main():
         start = time_player.split('-')[0].strip()
         end = time_player.split('-')[1].strip()
         suc = 0
+        rel_suc = 0
         n_game = 0
         words = {"fear":0,
 	"strength":0,
@@ -63,6 +65,7 @@ def main():
                     
                 if begin:
                     if role != P1.loc[x,'role']:
+                        rel_suc = 0
                         if role == "director":
                             words[P1.loc[x-1,"target"]] = 1
                         role = P1.loc[x,'role']
@@ -83,11 +86,16 @@ def main():
                             role2 = "end"
                         if(P1.loc[x,'target'] == P1.loc[x,'selection']) and role != role2:
                             suc+=1
+                            rel_suc = 1
+                        else:
+                            rel_suc = 0
 
+                           
                     pair.append(n_pair)
                     times.append(time)
                     game.append(n_game)
                     succes.append(suc)
+                    rel_succes.append(rel_suc)
                     X.append(P1.loc[x,"x"])
                     Y.append(P1.loc[x,"y"])
                     Z.append(P1.loc[x,"z"])
@@ -105,8 +113,8 @@ def main():
                             intr.append(0)
                     else:
                         intr.append(0)
-    df_fine = pd.DataFrame(list(zip(pair, roles,times, X,Y,Z, game,succes,target,selection,intr)),
-               columns =['Pair', 'Roles',"Time","X","Y","Z","Game","Succes","Target","Selection","Introducer"])
+    df_fine = pd.DataFrame(list(zip(pair, roles,times, X,Y,Z, game,succes,rel_succes,target,selection,intr)),
+               columns =['Pair', 'Roles',"Time","X","Y","Z","Game","Succes","rSucces","Target","Selection","Introducer"])
     df_fine.to_csv('data_P2_selec.csv', index=False)  
 
 if __name__ == "__main__":
