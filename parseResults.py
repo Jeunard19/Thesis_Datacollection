@@ -23,6 +23,7 @@ def main():
     selection = []
     intr = []
     succ = []
+    condition = []
     n_game = 0
     n_pair = 0
     begin = False
@@ -35,6 +36,7 @@ def main():
         n_pair += 1
         date_player = player_info.loc[i,'Date']
         time_player = player_info.loc[i,'Time']
+        group = player_info.loc[i,'condition']
         start = time_player.split('-')[0].strip()
         end = time_player.split('-')[1].strip()
         suc = 0
@@ -65,6 +67,7 @@ def main():
                     
                 if begin:
                     if role != P1.loc[x,'role']:
+                        rel_suc = 0
                         if role == "director":
                             words[P1.loc[x-1,"target"]] = 1
                         role = P1.loc[x,'role']
@@ -88,6 +91,8 @@ def main():
                             rel_suc = 1
                         else:
                             rel_suc = 0
+
+                    condition.append(group)
                     pair.append(n_pair)
                     times.append(time)
                     game.append(n_game)
@@ -110,10 +115,9 @@ def main():
                             intr.append(0)
                     else:
                         intr.append(0)
-    df_fine = pd.DataFrame(list(zip(pair, roles,times, X,Y,Z, game,succes,rel_succes,target,selection,intr)),
-               columns =['Pair', 'Roles',"Time","X","Y","Z","Game","Succes","rSucces","Target","Selection","Introducer"])
+    df_fine = pd.DataFrame(list(zip(pair, condition, roles,times, X,Y,Z, game,succes,rel_succes,target,selection,intr)),
+               columns =['Pair','Condition', 'Roles',"Time","X","Y","Z","Game","Succes","rSucces","Target","Selection","Introducer"])
     df_fine.to_csv('data_P1_selec.csv', index=False)  
 
 if __name__ == "__main__":
     main()
-
