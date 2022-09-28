@@ -73,6 +73,6 @@ def main():
 
     df_fine = pd.DataFrame(list(zip(pairs,condition,rounds,Xst,Yst,Zst,role,success,target,intr,succ_intro,part)),
                columns =['Pair','Condtion', 'Game',"X","Y","Z","Role","Success","Target","Introducer","Succ_Introducer","Participant"])
-    df_fine.to_csv('data_P1_SD.csv', index=False) 
+    df_fine.to_csv('data_P2_SD.csv', index=False) 
 if __name__ == "__main__":
     main()

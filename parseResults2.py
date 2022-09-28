@@ -1,6 +1,15 @@
 import csv
 import pandas as pd
 
+def getTime(time):
+    times = time.split(":")
+    new_time = int(times[0])
+    
+    if new_time > 12:
+        new_time = new_time-12
+
+    return str(new_time)+":"+times[1]
+
 
 
 def main():
@@ -60,7 +69,7 @@ def main():
             date= datetime[0]
             time= datetime[1].strip()
             if date_player == date:
-                if start == time[:-6]:
+                if getTime(start) == time[:-6]:
                     begin = True
                 elif P1.loc[x,'target'] == "Hello World" or  P1.loc[x,'target'] == "New Game":
                     begin = False

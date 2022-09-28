@@ -1,0 +1,174 @@
+---
+title: "Report"
+output:
+  pdf_document: default
+  html_document: default
+date: "2022-09-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Mixed-effect models
+### Here are some mixed effect of the data collected from the VR experiments
+
+Effects:
+
+--> IsIntroducer: If this is the first time the director is seeing the target
+
+--> TIME: The duration of the game
+
+--> PAIR: Pair number
+
+--> TARGET: Target word that needs to be guessed
+
+--> GAME: Game number
+
+--> condition: modified or normal
+
+--> PARTICIPANT: each individual
+
+
+
+```{r cars, echo=FALSE}
+library(ggplot2)
+library(ggeffects)
+library(lme4)
+P1<-read.csv("data_P1_TpR.csv")
+P2<-read.csv("data_P2_TpR.csv")
+
+P1_sd<-read.csv("data_P1_SD.csv")
+
+P2_sd<-read.csv("data_P2_SD.csv")
+P2_sd$Time <- P2$Time
+
+
+
+P2_sd$Time <- P2$Time
+P1_sd$Time <- P1$Time
+P <- rbind(P2_sd,P1_sd)
+
+#P <- P[P$Condtion=="modified",]
+P <- P[P$Role=="director",]
+
+D<-paste0(P$Target, P$Introducer)
+
+success <- as.numeric(P$Success)
+condition<-as.factor(P$Condtion)
+TIME <-round(P$Time/1000)
+PAIR <- as.factor(P$Pair)
+TARGET<- as.factor(P$Target)
+IsIntroducer <-as.factor(P$Introducer)
+PARTICIPANT <- as.factor(P$Participant)
+sdz<-P$Z
+sdx<-P$X
+sdy<-P$Y
+Game <- P$Game
+Win <-as.factor(P$Success)
+
+```
+
+## Standard deviation
+
+### These linear mixed-effect models investigates the effect of condition on the standard deviation of the z-axis and the x-axis.
+
+```{r pressure}
+lmodel2B =  lmer (sdz ~   condition + (condition|PAIR) + (1 | PARTICIPANT) + (condition|TARGET))
+AIC(lmodel2B)
+model2Bgraph = ggpredict(lmodel2B,c("condition"))
+plot(model2Bgraph)
+
+lmodel2C =  lmer (sdx ~   condition + (condition|PAIR) + (1 | PARTICIPANT) +(condition|TARGET))
+AIC(lmodel2C)
+model2Cgraph = ggpredict(lmodel2C,c("condition"))
+plot(model2Cgraph)
+```
+
+
+### Because I switched the x-axis with the z-axis in the modified group, I also want to see if more movement on the z-axis is caused by less movement on the x-axis ( for the modified group):
+
+```{r pressure2}
+lmodel12 =  lmer (sdz ~   sdx*condition + (sdx*condition|PAIR) + (1 | PARTICIPANT) + (sdx*condition|TARGET))
+
+AIC(lmodel12)
+model12graph = ggpredict(lmodel12,c("sdx","condition"))
+plot(model12graph)
+```
+
+### I also checked the effect that introducer have on the the z-axis (in combination with other fixed effect like Win and condition) :
+
+```{r pressure22}
+lmodel =  lmer (sdz ~   IsIntroducer + (IsIntroducer|PAIR) + (1 | PARTICIPANT) + (IsIntroducer|TARGET))
+lmodel3 =  lmer (sdz ~   condition+IsIntroducer + (condition+IsIntroducer|PAIR) + (1 | PARTICIPANT) + (condition+IsIntroducer|TARGET))
+lmodel4 =  lmer (sdz ~   condition*IsIntroducer + (condition*IsIntroducer|PAIR) + (1 | PARTICIPANT) + (condition*IsIntroducer|TARGET))
+lmodel5 =  lmer (sdz ~   Win + (Win|PAIR) + (1 | PARTICIPANT) + (Win|TARGET))
+lmodel6 =  lmer (sdz ~   Win+IsIntroducer + (Win+IsIntroducer|PAIR) + (1 | PARTICIPANT) + (Win+IsIntroducer|TARGET))
+lmodel7 =  lmer (sdz ~   Win*IsIntroducer + (Win*IsIntroducer|PAIR) + (1 | PARTICIPANT) + (Win*IsIntroducer|TARGET))
+
+
+AIC(lmodel,lmodel3,lmodel4,lmodel5,lmodel6,lmodel7)
+
+#Model lmodel7 seems to be the best performing model, based on the AIC score.
+modelgraph = ggpredict(lmodel6,c("IsIntroducer"))
+plot(modelgraph)
+modelgraph = ggpredict(lmodel6,c("Win"))
+plot(modelgraph)
+```
+
+
+
+
+```{r pressure3}
+P1<-read.csv("data_P1_TpR.csv")
+P2<-read.csv("data_P2_TpR.csv")
+
+P1_sd<-read.csv("data_P1_SD.csv")
+
+P2_sd<-read.csv("data_P2_SD.csv")
+P2_sd$Time <- P2$Time
+
+success <- as.numeric(P2_sd$Success)
+condition<-as.factor(P2_sd$Condtion)
+TIME <-round(P2_sd$Time/1000)
+PAIR <- as.factor(P2_sd$Pair)
+TARGET<- as.factor(P2_sd$Target)
+IsIntroducer <-as.factor(P2_sd$Introducer)
+GAME<- P2_sd$Game
+sdz<-P2_sd$Z
+sdx<-P2_sd$X
+sdy<-P2_sd$Y
+
+```
+
+## Success
+
+### Here are some models attempting to predict the success rate using various fixed effects
+
+```{r pressure4, warning=FALSE,message=FALSE}
+model9 = glmer( success ~ IsIntroducer+TIME + (IsIntroducer+TIME|PAIR) + (IsIntroducer+TIME|TARGET),family = binomial(link = "logit"),control = glmerControl(optimizer ='optimx', optCtrl=list(method='nlminb')))
+model8 = glmer( success ~ IsIntroducer + (IsIntroducer|PAIR) + (IsIntroducer|TARGET),family = binomial(link = "logit"),control = glmerControl(optimizer ='optimx', optCtrl=list(method='nlminb')))
+model7 = glmer( success ~ GAME*TIME + (GAME*TIME|PAIR) + (GAME*TIME|TARGET),family = binomial(link = "logit"),control = glmerControl(optimizer ='optimx', optCtrl=list(method='nlminb')))
+model6 = glmer( success ~ GAME+TIME + (GAME+TIME|PAIR) + (GAME+TIME|TARGET),family = binomial(link = "logit"))
+model5 = glmer( success ~ GAME + (GAME|PAIR) + (GAME|TARGET),family = binomial(link = "logit"))
+model5b = glmer( success ~ GAME+IsIntroducer+ (GAME+IsIntroducer|PAIR) + (GAME+IsIntroducer|TARGET),family = binomial(link = "logit"))
+model4 = glmer( success ~ condition * TIME + (condition*TIME|PAIR) + (condition *TIME| TARGET), control = glmerControl(optimizer ='optimx', optCtrl=list(method='nlminb')), family = binomial(link = "logit"))
+model3 = glmer( success ~ condition + TIME + (condition+TIME|PAIR) + (condition +TIME| TARGET), control = glmerControl(optimizer ='optimx', optCtrl=list(method='nlminb')),  family = binomial(link = "logit"))
+model2B = glmer( success ~ condition + (condition|TARGET), family = binomial(link = "logit"))
+model2 = glmer( success ~ TIME + (TIME|PAIR) + (TIME|TARGET),family = binomial(link = "logit"), control = glmerControl(optimizer ='optimx', optCtrl=list(method='nlminb')))
+model1 = glmer( success ~ 1  + (1|PAIR) + (1| TARGET),family = binomial(link = "logit"), control = glmerControl(optimizer ='optimx', optCtrl=list(method='nlminb')))
+AIC(model1,model2,model2B,model3,model4,model5,model5b,model6,model7,model8,model9)
+
+model2graph = ggpredict(model2,c(" TIME"))
+plot(model2graph)
+
+model8graph = ggpredict(model8,c("IsIntroducer"))
+plot(model8graph)
+
+model5graph = ggpredict(model5,c("GAME"))
+plot(model5graph)
+
+model2Bgraph = ggpredict(model2B,c("condition"))
+plot(model2Bgraph)
+```
+

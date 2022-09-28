@@ -1,0 +1,324 @@
+---
+title: "MixedeffectsAnalysis"
+output: html_document
+date: "2022-09-13"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Mixed effect models
+
+```{r cars}
+library(ggeffects)
+library(lme4)
+library(ggplot2)
+P1<-read.csv("data_P1_TpR.csv")
+P1<-P1[P1$Game!=1,]
+P2<-read.csv("data_P2_TpR.csv")
+P2<-P2[P2$Game!=1,]
+P1_sd<-read.csv("data_P1_SD.csv")
+P2_sd<-read.csv("data_P2_SD.csv")
+
+P2_sd<-P2_sd[P2_sd$Game!=1,]
+P1_sd<-P1_sd[P1_sd$Game!=1,]
+P2_sd$Time <- P2$Time
+P1_sd$Time <- P1$Time
+
+P1<-P1[!P1$Target=="Hello World",]
+P2<-P2[!P2$Target=="Hello World",]
+P1_sd<-P1_sd[!P1_sd$Target=="Hello World",]
+P2_sd<-P2_sd[!P2_sd$Target=="Hello World",]
+
+
+```
+
+## Plot of Rounds against Time per round
+### Only using data from headset 1
+
+```{r pressure11}
+
+ggplot(data=P1, aes(x=Game, y=Time, color=Condtion)) +
+  geom_point(position=position_dodge(width=0.3))+geom_smooth(method = "loess", se = TRUE)
+
+```
+
+## Plot of rounds against standard deviation of x 
+### Only using data from director (both headsets)
+```{r pressure12}
+P_sd = rbind(P1_sd, P2_sd)
+P_sd = P_sd[P_sd$Role == "director",]
+P_sd<-P_sd[P_sd$Game!=1,]
+
+ggplot(data=P_sd, aes(x=Game, y=X, color=Condtion)) +
+  geom_point(position=position_dodge(width=0.3))+geom_smooth(method = "loess", se = TRUE)
+
+ggplot(data=P_sd, aes(x=Game, y=Y, color=Condtion)) +
+  geom_point(position=position_dodge(width=0.3))+geom_smooth(method = "loess", se = TRUE)
+
+
+ggplot(data=P_sd, aes(x=Game, y=Z, color=Condtion)) +
+  geom_point(position=position_dodge(width=0.3))+geom_smooth(method = "loess", se = TRUE)
+
+```
+
+## Plot of rounds against standard deviation of y 
+### Only using data from director (both headsets)
+```{r pressure122}
+
+ggplot(data=P_sd, aes(x=Game, y=Y, color=Condtion)) +
+  geom_point(position=position_dodge(width=0.3))+geom_smooth(method = "loess", se = TRUE)
+
+```
+
+## Plot of rounds against standard deviation of z 
+### Only using data from director (both headsets)
+```{r pressure32}
+ggplot(data=P_sd, aes(x=Game, y=Z, color=Condtion)) +
+  geom_point(position=position_dodge(width=0.3))+geom_smooth(method = "loess", se = TRUE)
+```
+
+
+## Plot of rounds against success
+
+```{r pressure13}
+P_sd<-P_sd[P_sd$Game!=1,]
+P2_sd_norm = P_sd[P_sd$Condtion == "normal",]
+P2_sd_nmod = P_sd[P_sd$Condtion == "modified",]
+
+P2_sd_norm$Succes <- as.factor(P2_sd_norm$Succes )
+P2_sd_nmod$Succes <- as.factor(P2_sd_nmod$Succes )
+
+#Modified
+cdplot(Succes ~ Game, data=P2_sd_nmod)
+
+#Normal
+cdplot(Succes ~ Game, data=P2_sd_norm)
+
+
+```
+
+## Plot of words introducer/non introducer against z
+### Only modified group
+
+```{r pressure14}
+P <- rbind(P2_sd,P1_sd)
+P <- P[P$Role=="director",]
+P <- P[P$Condtion=="modified",]
+P<-P[!P$Target=="Hello World",]
+P<-P[P$Game!=1,]
+
+D<-paste0(P$Target, P$Introducer)
+
+ggplot(data=P, aes(x=D, y=Z, color=Introducer)) +
+  geom_point(position=position_dodge(width=0.3))+theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+
+
+```
+
+
+
+
+## Compared baseline model with model of condition on success
+
+```{r pressure}
+success <- as.numeric(P2_sd$Success)
+condition<-as.factor(P2_sd$Condtion)
+TIME <-round(P2_sd$Time/1000)
+PAIR <- as.factor(P2_sd$Pair)
+TARGET<- as.factor(P2_sd$Target)
+IsIntroducer <-as.factor(P2_sd$Introducer)
+GAME<- P2_sd$Game
+sdz<-P2_sd$Z
+sdx<-P2_sd$X
+sdy<-P2_sd$Y
+
+
+model1 = glmer( success ~ 1  + (1|PAIR) + (1| TARGET),family = binomial(link = "logit"))
+model2err = glmer( success ~ condition + (1+condition|PAIR) + (1+condition|TARGET), family = binomial(link = "logit"), control = glmerControl(optimizer ='optimx', optCtrl=list(method='nlminb')))
+
+model2 = glmer( success ~ condition + (1+condition|TARGET), family = binomial(link = "logit"))
+summary(model2)
+AIC(model1,model2)
+
+```
+
+
+
+
+
+
+
+
+
+```{r pressure3}
+library(ggplot2)
+library(ggeffects)
+library(lme4)
+P1<-read.csv("data_P1_TpR.csv")
+P2<-read.csv("data_P2_TpR.csv")
+
+P1_sd<-read.csv("data_P1_SD.csv")
+
+P2_sd<-read.csv("data_P2_SD.csv")
+P2_sd$Time <- P2$Time
+
+
+
+P2_sd$Time <- P2$Time
+P1_sd$Time <- P1$Time
+P <- rbind(P2_sd,P1_sd)
+
+P <- P[P$Role=="director",]
+P<-P[P$Target!="Hello World",]
+P<-P[P$Game!=1,]
+
+
+success <- as.numeric(P$Success)
+condition<-as.factor(P$Condtion)
+TIME <-round(P$Time/1000)
+PAIR <- as.factor(P$Pair)
+TARGET<- as.factor(P$Target)
+IsIntroducer <-as.factor(P$Introducer)
+PARTICIPANT <- as.factor(P$Participant)
+sdz<-P$Z
+sdx<-P$X
+sdy<-P$Y
+Game <- P$Game
+Win <-as.factor(P$Success)
+```
+
+
+## Mixed effect models of all axis over time 
+
+
+```{r pressure2}
+lmodel1A =  lmer (sdz ~   1  + (1 | PARTICIPANT)+ (1 | TARGET) + (1|PAIR))
+lmodel1B =  lmer (sdz ~   Game  + (Game| PARTICIPANT)+ (Game | TARGET) + (Game|PAIR),control = lmerControl(
+                           optimizer ='optimx', optCtrl=list(method='L-BFGS-B')) )
+AIC(lmodel1A,lmodel1B)
+summary(lmodel1B)
+
+lmodel2A =  lmer (sdx ~    1  + (1 | PARTICIPANT)+ (1 | TARGET) + (1|PAIR))
+lmodel2B =  lmer (sdx ~  Game  + (Game | PARTICIPANT)+ (Game | TARGET) + (Game|PAIR),control = lmerControl(
+                           optimizer ='optimx', optCtrl=list(method='L-BFGS-B')))
+AIC(lmodel2A,lmodel2B )
+summary(lmodel2B)
+
+lmodel3A =  lmer (sdy ~    1  + (1 | PARTICIPANT)+ (1 | TARGET) + (1|PAIR))
+lmodel3B =  lmer (sdy ~   Game  + (Game | PARTICIPANT) + (Game | TARGET) + (Game|PAIR),control = lmerControl(
+                           optimizer ='optimx', optCtrl=list(method='nlminb')))
+AIC(lmodel3A,lmodel3B )
+summary(lmodel3B)
+
+model1Bgraph = ggpredict(lmodel1B,c("Game"))
+plot(model1Bgraph)
+model2Bgraph = ggpredict(lmodel2B,c("Game"))
+plot(model2Bgraph)
+model3Bgraph = ggpredict(lmodel3B,c("Game"))
+plot(model3Bgraph)
+
+
+```
+
+
+## Target and introducer as fixed variable dependend is axis.
+
+
+```{r pressure4}
+lmodel1A =  lmer (sdz ~   1  + (1 | PARTICIPANT) + (1|PAIR))
+lmodel1B =  lmer (sdz ~   TARGET+ IsIntroducer + (1 | PARTICIPANT)+(1+TARGET+ IsIntroducer|PAIR ))
+AIC(lmodel1A,lmodel1B)
+model1Bgraph = ggpredict(lmodel1B,c("TARGET"))
+plot(model1Bgraph)
+model1Bgraph = ggpredict(lmodel1B,c("IsIntroducer"))
+plot(model1Bgraph)
+summary(lmodel1B)
+
+
+lmodel2A =  lmer (sdx ~   1 + (1 | PARTICIPANT) + (1|PAIR))
+lmodel2B =  lmer (sdx ~   TARGET+IsIntroducer + (1 | PARTICIPANT)+(1+TARGET+ IsIntroducer|PAIR ))
+model2Bgraph = ggpredict(lmodel2B,c("TARGET"))
+plot(model2Bgraph)
+model2Bgraph = ggpredict(lmodel2B,c("IsIntroducer"))
+plot(model2Bgraph)
+summary(lmodel2B)
+
+lmodel3A =  lmer (sdy ~   1  + (1 | PARTICIPANT) + (1|PAIR))
+lmodel3B =  lmer (sdy ~   TARGET+IsIntroducer  + (1 | PARTICIPANT) +(1+TARGET+ IsIntroducer|PAIR ))
+model3Bgraph = ggpredict(lmodel3B,c("TARGET"))
+plot(model3Bgraph)
+model3Bgraph = ggpredict(lmodel3B,c("IsIntroducer"))
+plot(model3Bgraph)
+summary(lmodel3B)
+
+
+```
+
+## Target and introducer as fixed variable dependend is axis.
+
+
+```{r pressure4}
+lmodel1A =  lmer (sdz ~   1  + (1 | PARTICIPANT) + (1|PAIR))
+lmodel1B =  lmer (sdz~condition+ (1 | PARTICIPANT) +(1|PAIR)+(condition|TARGET))
+AIC(lmodel1A,lmodel1B)
+model1Bgraph = ggpredict(lmodel1B,c("condition"))
+plot(model1Bgraph)
+summary(lmodel1B)
+
+
+lmodel2A =  lmer (sdx ~   1 + (1 | PARTICIPANT) + (1|PAIR))
+lmodel2B =  lmer (sdx~condition+ (1 | PARTICIPANT) +(1|PAIR)+(condition|TARGET))
+model2Bgraph = ggpredict(lmodel2B,c("condition"))
+plot(model2Bgraph)
+summary(lmodel2B)
+AIC(lmodel2A,lmodel2B)
+
+lmodel3A =  lmer (sdy ~   1  + (1 | PARTICIPANT) + (1|PAIR))
+lmodel3B =  lmer (sdy~condition+ (1 | PARTICIPANT) +(1|PAIR)+(condition|TARGET))
+model3Bgraph = ggpredict(lmodel3B,c("condition"))
+plot(model3Bgraph)
+summary(lmodel3B)
+AIC(lmodel3A,lmodel3B)
+
+
+```
+
+## Target and introducer as fixed variable dependend is axis.
+
+
+```{r pressure4}
+P2_sd<-P2_sd[!P2_sd$Game==1,]
+P1_sd<-P1_sd[!P1_sd$Game==1,]
+P_mod <-P[P$Condtion=="modified",]
+
+P_mod$Introducer = as.factor(P_mod$Introducer)
+lmodel1A =  lmer (Z ~   1  + (1 | Participant) + (1|Pair)+ (1|Target),data = P_mod)
+lmodel1B =  lmer (Z ~   Introducer  + (Introducer | Participant) + (Introducer|Pair)+ (Introducer|Target),data = P_mod)
+
+AIC(lmodel1A,lmodel1B)
+model1Bgraph = ggpredict(lmodel1B,c("Introducer"))
+plot(model1Bgraph)
+summary(lmodel1B)
+
+
+lmodel2A =  lmer (X ~   1  + (1 | Participant) + (1|Pair)+ (1|Target),data = P_mod)
+lmodel2B =  lmer (X ~   Introducer  + (Introducer | Participant) + (Introducer|Pair)+ (Introducer|Target),data = P_mod)
+model2Bgraph = ggpredict(lmodel2B,c("Introducer"))
+plot(model2Bgraph)
+summary(lmodel2B)
+AIC(lmodel2A,lmodel2B)
+
+lmodel3A =  lmer (Y ~   1  + (1 | Participant) + (1|Pair)+ (1|Target),data = P_mod)
+lmodel3B =  lmer (Y ~   Introducer  + (Introducer | Participant) + (Introducer|Pair)+ (Introducer|Target),data = P_mod)
+model3Bgraph = ggpredict(lmodel3B,c("Introducer"))
+plot(model3Bgraph)
+summary(lmodel3B)
+AIC(lmodel3A,lmodel3B)
+
+
+```
+
+

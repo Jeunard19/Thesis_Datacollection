@@ -1,0 +1,178 @@
+---
+title: "Mixed_effects_Model2"
+output: html_document
+date: "2022-09-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading data
+
+
+```{r cars}
+library(ggplot2)
+library(ggeffects)
+library(lme4)
+P1<-read.csv("data_P1_TpR.csv")
+P2<-read.csv("data_P2_TpR.csv")
+
+P1_sd<-read.csv("data_P1_SD.csv")
+
+P2_sd<-read.csv("data_P2_SD.csv")
+P2_sd$Time <- P2$Time
+
+
+
+P2_sd$Time <- P2$Time
+P1_sd$Time <- P1$Time
+P <- rbind(P2_sd,P1_sd)
+
+P <- P[P$Role=="director",]
+P<-P[P$Target!="Hello World",]
+P<-P[P$Game!=1,]
+
+
+success <- as.numeric(P$Success)
+condition<-as.factor(P$Condtion)
+TIME <-round(P$Time/1000)
+PAIR <- as.factor(P$Pair)
+TARGET<- as.factor(P$Target)
+IsIntroducer <-as.factor(P$Introducer)
+PARTICIPANT <- as.factor(P$Participant)
+sdz<-P$Z
+sdx<-P$X
+sdy<-P$Y
+Game <- P$Game
+Win <-as.factor(P$Success)
+```
+
+## Mixed effect models of all axis over time 
+
+
+```{r pressure234}
+lmodel1A =  lmer (sdz ~   1  + (1 | PARTICIPANT)+ (1 | TARGET) + (1|PAIR))
+lmodel1B =  lmer (sdz ~   Game  + (Game| PARTICIPANT)+ (Game | TARGET) + (Game|PAIR),control = lmerControl(
+                           optimizer ='optimx', optCtrl=list(method='L-BFGS-B')) )
+AIC(lmodel1A,lmodel1B)
+
+lmodel2A =  lmer (sdx ~    1  + (1 | PARTICIPANT)+ (1 | TARGET) + (1|PAIR))
+lmodel2B =  lmer (sdx ~  Game  + (Game | PARTICIPANT)+ (Game | TARGET) + (Game|PAIR),control = lmerControl(
+                           optimizer ='optimx', optCtrl=list(method='L-BFGS-B')))
+AIC(lmodel2A,lmodel2B )
+
+lmodel3A =  lmer (sdy ~    1  + (1 | PARTICIPANT)+ (1 | TARGET) + (1|PAIR))
+lmodel3B =  lmer (sdy ~   Game  + (Game | PARTICIPANT) + (Game | TARGET) + (Game|PAIR),control = lmerControl(
+                           optimizer ='optimx', optCtrl=list(method='nlminb')))
+AIC(lmodel3A,lmodel3B )
+
+#model1Bgraph = ggpredict(lmodel1B,c("Game"))
+#plot(model1Bgraph)
+#model2Bgraph = ggpredict(lmodel2B,c("Game"))
+#plot(model2Bgraph)
+#model3Bgraph = ggpredict(lmodel3B,c("Game"))
+#plot(model3Bgraph)
+
+
+```
+
+
+
+
+## Investigating the condition effect on the x,y,z,axis
+
+```{r pressure}
+
+lmodel1A =  lmer (sdz ~   1  + (1 | PARTICIPANT) + (1|PAIR)+(1|TARGET))
+lmodel1B =  lmer (sdz~condition+ (1 | PARTICIPANT) +(1|PAIR)+(condition|TARGET))
+AIC(lmodel1A,lmodel1B)
+model1Bgraph = ggpredict(lmodel1B,c("condition"))
+plot(model1Bgraph)
+summary(lmodel1B)
+
+
+lmodel2A =  lmer (sdx ~   1 + (1 | PARTICIPANT) + (1|PAIR)+(1|TARGET))
+lmodel2B =  lmer (sdx~condition+ (1 | PARTICIPANT) +(1|PAIR)+(condition|TARGET))
+model2Bgraph = ggpredict(lmodel2B,c("condition"))
+plot(model2Bgraph)
+summary(lmodel2B)
+AIC(lmodel2A,lmodel2B)
+
+lmodel3A =  lmer (sdy ~   1  + (1 | PARTICIPANT) + (1|PAIR)+(1|TARGET))
+lmodel3B =  lmer (sdy~condition+ (1 | PARTICIPANT) +(1|PAIR)+(condition|TARGET))
+model3Bgraph = ggpredict(lmodel3B,c("condition"))
+plot(model3Bgraph)
+summary(lmodel3B)
+AIC(lmodel3A,lmodel3B)
+
+```
+
+## Investigating effect of introducer on the x,y,z,axis (modified)
+
+
+You can also embed plots, for example:
+
+```{r pressure2}
+P_mod <-P[P$Condtion=="modified",]
+P_mod$Introducer = as.factor(P_mod$Introducer)
+
+lmodel1A =  lmer (Z ~   1  + (1 | Participant) + (1|Pair)+ (1|Target),data = P_mod)
+lmodel1B =  lmer (Z ~   Introducer  + (Introducer | Participant) + (Introducer|Pair)+ (Introducer|Target),data = P_mod)
+
+AIC(lmodel1A,lmodel1B)
+model1Bgraph = ggpredict(lmodel1B,c("Introducer"))
+plot(model1Bgraph)
+summary(lmodel1B)
+
+
+lmodel2A =  lmer (X ~   1  + (1 | Participant) + (1|Pair)+ (1|Target),data = P_mod)
+lmodel2B =  lmer (X ~   Introducer  + (Introducer | Participant) + (Introducer|Pair)+ (Introducer|Target),data = P_mod)
+model2Bgraph = ggpredict(lmodel2B,c("Introducer"))
+plot(model2Bgraph)
+summary(lmodel2B)
+AIC(lmodel2A,lmodel2B)
+
+lmodel3A =  lmer (Y ~   1  + (1 | Participant) + (1|Pair)+ (1|Target),data = P_mod)
+lmodel3B =  lmer (Y ~   Introducer  + (Introducer | Participant) + (Introducer|Pair)+ (Introducer|Target),data = P_mod)
+model3Bgraph = ggpredict(lmodel3B,c("Introducer"))
+plot(model3Bgraph)
+summary(lmodel3B)
+AIC(lmodel3A,lmodel3B)
+
+
+```
+
+
+## Investigating effect of introducer on the x,y,z,axis (normal)
+
+
+```{r pressure3}
+P_norm <-P[P$Condtion=="normal",]
+P_norm$Introducer = as.factor(P_norm$Introducer)
+
+lmodel1A =  lmer (Z ~   1  + (1 | Participant) + (1|Pair)+ (1|Target),data = P_norm)
+lmodel1B =  lmer (Z ~   Introducer  + (Introducer | Participant) + (Introducer|Pair)+ (Introducer|Target),data = P_norm)
+
+AIC(lmodel1A,lmodel1B)
+model1Bgraph = ggpredict(lmodel1B,c("Introducer"))
+plot(model1Bgraph)
+summary(lmodel1B)
+
+
+lmodel2A =  lmer (X ~   1  + (1 | Participant) + (1|Pair)+ (1|Target),data = P_norm)
+lmodel2B =  lmer (X ~   Introducer  + (Introducer | Participant) + (Introducer|Pair)+ (Introducer|Target),data = P_norm)
+model2Bgraph = ggpredict(lmodel2B,c("Introducer"))
+plot(model2Bgraph)
+summary(lmodel2B)
+AIC(lmodel2A,lmodel2B)
+
+lmodel3A =  lmer (Y ~   1  + (1 | Participant) + (1|Pair)+ (1|Target),data = P_norm)
+lmodel3B =  lmer (Y ~   Introducer  + (Introducer | Participant) + (Introducer|Pair)+ (Introducer|Target),data = P_norm)
+model3Bgraph = ggpredict(lmodel3B,c("Introducer"))
+plot(model3Bgraph)
+summary(lmodel3B)
+AIC(lmodel3A,lmodel3B)
+
+
+```

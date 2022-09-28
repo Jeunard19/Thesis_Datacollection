@@ -2,6 +2,15 @@ import csv
 import pandas as pd
 
 
+def getTime(time):
+    times = time.split(":")
+    new_time = int(times[0])
+    
+    if new_time > 12:
+        new_time = new_time-12
+
+    return str(new_time)+":"+times[1]
+
 
 def main():
     header_list = ["player", "role","time","x","y","z","target","selection"]
@@ -52,34 +61,33 @@ def main():
 	"envy":0,
 	"anger":0,
 	"freedom":0}
-        
-        print(i)
+
         for x in range(len(P1)):
             #split time based on date and time
             datetime = P1.loc[x,'time'].split(",")
             date= datetime[0]
             time= datetime[1].strip()
             if date_player == date:
-                if start == time[:-6]:
+
+                if getTime(start) == time[:-6]:
+                    print(start)
+                    print(getTime(start))
+                    print(time[:-6])
                     begin = True
                 elif P1.loc[x,'target'] == "Hello World" or  P1.loc[x,'target'] == "New Game":
                     begin = False
                     
                 if begin:
+                   
                     if role != P1.loc[x,'role']:
                         rel_suc = 0
                         if role == "director":
                             words[P1.loc[x-1,"target"]] = 1
                         role = P1.loc[x,'role']
                         n_game += 1
-                        
-                        #if choice == P1.loc[x,'target']:
-                            
-                        #suc = 0
+
                     elif role == P1.loc[x,'role']:
                         choice = P1.loc[x,'selection']
-                        print(P1.loc[x,'target'])
-                        print(datetime)
                         
                         try:
                             role2 = P1.loc[x+1,'role']
