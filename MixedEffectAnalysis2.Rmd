@@ -52,27 +52,28 @@ Win <-as.factor(P$Success)
 
 
 ```{r pressure234}
-lmodel1A =  lmer (sdz ~   1  + (1 | PARTICIPANT)+ (1 | TARGET) + (1|PAIR))
+lmodel1A =  lmer (sdz ~   1  + (1 | PARTICIPANT)+ (1 | TARGET) + (1|PAIR), control = lmerControl(  optimizer ='optimx', optCtrl=list(method='L-BFGS-B')) )
 lmodel1B =  lmer (sdz ~   Game  + (Game| PARTICIPANT)+ (Game | TARGET) + (Game|PAIR),control = lmerControl(
                            optimizer ='optimx', optCtrl=list(method='L-BFGS-B')) )
 AIC(lmodel1A,lmodel1B)
+model1Bgraph = ggpredict(lmodel1B,c("Game"))
+plot(model1Bgraph)
 
-lmodel2A =  lmer (sdx ~    1  + (1 | PARTICIPANT)+ (1 | TARGET) + (1|PAIR))
+lmodel2A =  lmer (sdx ~    1  + (1 | PARTICIPANT)+ (1 | TARGET) + (1|PAIR), control = lmerControl(optimizer ='optimx', optCtrl=list(method='L-BFGS-B')))
 lmodel2B =  lmer (sdx ~  Game  + (Game | PARTICIPANT)+ (Game | TARGET) + (Game|PAIR),control = lmerControl(
                            optimizer ='optimx', optCtrl=list(method='L-BFGS-B')))
 AIC(lmodel2A,lmodel2B )
+model2Bgraph = ggpredict(lmodel2B,c("Game"))
+plot(model2Bgraph)
 
-lmodel3A =  lmer (sdy ~    1  + (1 | PARTICIPANT)+ (1 | TARGET) + (1|PAIR))
+lmodel3A =  lmer (sdy ~    1  + (1 | PARTICIPANT)+ (1 | TARGET) + (1|PAIR), control = lmerControl(
+                           optimizer ='optimx', optCtrl=list(method='nlminb')))
 lmodel3B =  lmer (sdy ~   Game  + (Game | PARTICIPANT) + (Game | TARGET) + (Game|PAIR),control = lmerControl(
                            optimizer ='optimx', optCtrl=list(method='nlminb')))
 AIC(lmodel3A,lmodel3B )
 
-#model1Bgraph = ggpredict(lmodel1B,c("Game"))
-#plot(model1Bgraph)
-#model2Bgraph = ggpredict(lmodel2B,c("Game"))
-#plot(model2Bgraph)
-#model3Bgraph = ggpredict(lmodel3B,c("Game"))
-#plot(model3Bgraph)
+model3Bgraph = ggpredict(lmodel3B,c("Game"))
+plot(model3Bgraph)
 
 
 ```
@@ -87,6 +88,7 @@ AIC(lmodel3A,lmodel3B )
 lmodel1A =  lmer (sdz ~   1  + (1 | PARTICIPANT) + (1|PAIR)+(1|TARGET))
 lmodel1B =  lmer (sdz~condition+ (1 | PARTICIPANT) +(1|PAIR)+(condition|TARGET))
 AIC(lmodel1A,lmodel1B)
+anova(lmodel1A,lmodel1B)
 model1Bgraph = ggpredict(lmodel1B,c("condition"))
 plot(model1Bgraph)
 summary(lmodel1B)
